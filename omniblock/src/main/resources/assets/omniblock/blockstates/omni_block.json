@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "omniblock:block/omni_block"
+    }
+  }
+}

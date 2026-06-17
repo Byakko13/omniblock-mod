@@ -1,0 +1,27 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+    modId = "omniblock"
+    version = "1.0.0"
+    displayName = "OmniBlock"
+    description = '''
+        A lucky block that drops random items from ALL mods in your modpack!
+        - Break it to get a random item
+        - Use Silk Touch to pick it up
+        - Use Fortune for bonus drops (each level = 25% chance of extra drop)
+        - Regenerates automatically after 10 seconds
+    '''
+    [[mods.dependencies.omniblock]]
+        modId = "neoforge"
+        type = "required"
+        versionRange = "[21.1.81,)"
+        ordering = "NONE"
+        side = "BOTH"
+    [[mods.dependencies.omniblock]]
+        modId = "minecraft"
+        type = "required"
+        versionRange = "[1.21.1,)"
+        ordering = "NONE"
+        side = "BOTH"
