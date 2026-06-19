@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
@@ -39,8 +40,23 @@ public class OmniStructurePiece extends StructurePiece {
     private static BoundingBox makeBB(BlockPos pos, int tier) {
         int r = switch (tier) { case 3 -> 14; case 2 -> 7; case 1 -> 6; default -> 3; };
         int h = switch (tier) { case 3 -> 14; case 2 -> 12; case 1 -> 6; default -> 4; };
-        return new BoundingBox(pos.getX()-r, pos.getY(), pos.getZ()-r,
+        return new BoundingBox(pos.getX()-r, pos.getY()-60, pos.getZ()-r,
                                pos.getX()+r, pos.getY()+h, pos.getZ()+r);
+    }
+
+    // Prende il massimo Y tra i 4 angoli e il centro per ancorare la struttura al terreno più alto
+    private int getMaxSurfaceY(WorldGenLevel level, BlockPos center, int radius) {
+        int maxY = Integer.MIN_VALUE;
+        int[] offsets = {-radius, radius};
+        for (int dx : offsets)
+            for (int dz : offsets) {
+                int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, center.getX() + dx, center.getZ() + dz);
+                if (y > maxY) maxY = y;
+            }
+        // Controlla anche il centro
+        int centerY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, center.getX(), center.getZ());
+        if (centerY > maxY) maxY = centerY;
+        return maxY;
     }
 
     @Override
@@ -48,10 +64,12 @@ public class OmniStructurePiece extends StructurePiece {
                             RandomSource random, BoundingBox bb, ChunkPos cp, BlockPos origin) {
         int cx = (boundingBox.minX() + boundingBox.maxX()) / 2;
         int cz = (boundingBox.minZ() + boundingBox.maxZ()) / 2;
-        int surfaceY = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, cx, cz);
+        int r = switch (tier) { case 3 -> 14; case 2 -> 7; case 1 -> 6; default -> 3; };
+
+        int surfaceY = getMaxSurfaceY(level, new BlockPos(cx, 0, cz), r);
         BlockPos base = new BlockPos(cx, surfaceY, cz);
 
-        clearArea(level, base, tier);
+        clearAbove(level, base, tier);
 
         switch (tier) {
             case 0 -> placeCommon(level, base);
@@ -61,9 +79,9 @@ public class OmniStructurePiece extends StructurePiece {
         }
     }
 
-    private void clearArea(WorldGenLevel level, BlockPos base, int tier) {
-        int r = switch (tier) { case 3 -> 14; case 2 -> 7; case 1 -> 6; default -> 3; };
-        int h = switch (tier) { case 3 -> 14; case 2 -> 12; case 1 -> 6; default -> 4; };
+    private void clearAbove(WorldGenLevel level, BlockPos base, int tier) {
+        int r = switch (tier) { case 3 -> 14; case 2 -> 8; case 1 -> 7; default -> 4; };
+        int h = switch (tier) { case 3 -> 14; case 2 -> 14; case 1 -> 10; default -> 6; };
         for (int x = -r; x <= r; x++)
             for (int z = -r; z <= r; z++)
                 for (int y = 0; y <= h; y++)
@@ -165,7 +183,7 @@ public class OmniStructurePiece extends StructurePiece {
     }
 
     private void setSpawner(WorldGenLevel level, BlockPos pos, net.minecraft.world.entity.EntityType<?> type) {
-        set(level, pos, net.minecraft.world.level.block.Blocks.SPAWNER.defaultBlockState());
+        set(level, pos, Blocks.SPAWNER.defaultBlockState());
         PendingSpawnerConfig.queueSpawner(pos, type);
     }
 
